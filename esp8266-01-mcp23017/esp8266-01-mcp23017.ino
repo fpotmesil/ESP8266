@@ -46,7 +46,6 @@ void setup()
 {
     // put your setup code here, to run once:
     Serial.begin(115200);
-    display_Running_Sketch();
 
     Serial.println("\nI2C Scanner");
     Serial.print("SDA: ");
@@ -123,7 +122,8 @@ void loop()
                     if (currentLine.length() == 0) 
                     {
                         writeHtmlPageHeaders( client );
-                        checkUpdatedIoValues( header );
+                        String output = "";
+                        checkUpdatedIoValues( header, output );
                         writeHtmlPageCSS( client );
                         writeHtmlPageData( client );
                         break;
@@ -164,7 +164,9 @@ void checkForHeaderCommands( String & header )
 }
 
 
-void checkUpdatedIoValues( String & header )
+byte checkUpdatedIoValues( 
+        const String & header,
+        String & output )
 {
     // turns the GPIOs on and off
     if (header.indexOf("GET /5/on") >= 0)
@@ -191,9 +193,19 @@ void checkUpdatedIoValues( String & header )
         output4State = "off";
         digitalWrite(output4, LOW);
     }
+    else if( header.indexOf("Get /scanI2C") >= 0)
+    {
+        return scan_I2C_for_mcp23017( output );
+    }
+    else if( header.indexOf("Get /sketch") >= 0)
+    {
+        display_Running_Sketch(output);
+    }
+
+    return -1;
 }
 
-void writeHtmlPageData( WifiClient & client )
+void writeHtmlPageData( WiFiClient & client )
 {
     client.println("<body><h1>Freds ESP8266 MCP23017 Controller</h1>");
 
@@ -240,7 +252,7 @@ void displayCurrentOutputs( WiFiClient & client )
 
 }
 
-void writeHtmlPageHeaders( WifiClient & client )
+void writeHtmlPageHeaders( WiFiClient & client )
 {
     // HTTP headers always start with a response code (e.g. HTTP/1.1 200 OK)
     // and a content-type so the client knows what's coming, then a blank line:
@@ -251,7 +263,7 @@ void writeHtmlPageHeaders( WifiClient & client )
     client.println();
 }
 
-void writeHtmlPageCSS( WifiClient & client )
+void writeHtmlPageCSS( WiFiClient & client )
 {
     client.println("<!DOCTYPE html><html>");
     client.println("<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
@@ -264,7 +276,12 @@ void writeHtmlPageCSS( WifiClient & client )
     client.println(".button2 {background-color: #77878A;}</style></head>");
 }
 
-byte find_i2c_address(void)
+//
+// I2C bus scanning code taken from 
+// https://forum.arduino.cc/t/solved-esp-01-i2c-mcp23017-and-the-arduino-ide/932889/11
+// refactored into function that dumps to web page as scan takes place instead of Serial.println
+//
+byte scan_I2C_for_mcp23017( String & output )
 {
     byte error = 0;
     byte address = 0;
@@ -314,8 +331,13 @@ byte find_i2c_address(void)
     return address;        
 }
 
+//
 // displays at startup the Sketch running in the Arduino
-void display_Running_Sketch (void)
+// https://forum.arduino.cc/t/solved-esp-01-i2c-mcp23017-and-the-arduino-ide/932889/11
+// refactored into function that dumps to web page as scan takes place instead of Serial.println
+//
+
+void display_Running_Sketch( String & output )
 {
     String the_path = __FILE__;
     int slash_loc = the_path.lastIndexOf('/');
