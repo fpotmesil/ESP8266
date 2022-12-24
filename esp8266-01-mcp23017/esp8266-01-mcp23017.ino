@@ -1,11 +1,41 @@
+//==============================================================================
+// super simple example web page for ESP8266-01 board connected to
+// MCP23017 16 port IO expander.  
+//
+// Playing with some led outputs and adding stuff as I go.
+//
+// Fred Potmesil
+// December 22, 2022
+//
+//==============================================================================
 
-// Load Wi-Fi library
+//
+// simple conditional to allow for easy web page output testing
+// separate from the board and mcp23017 code 
+// there really has to be a better way to just dump html code for testing, right??
+// being new I just do not know the 'real' way to do this hopefully, this is klunky
+//
+#define RUN_ON_ESP8266 1
+
+#if RUN_ON_ESP8266
 #include <ESP8266WiFi.h>
 #include <Wire.h>
 
-//ESP-01 i2c pins (arduino defaults to 4/5)
+// ESP8266-01 i2c pins (arduino defaults to 4/5)
 #define SDA 0
 #define SCL 2
+
+byte checkForHeaderCommands(
+        const String & header,
+        String & output );
+
+byte scan_I2C_for_mcp23017(
+        String & output,
+        const bool printSerial = false);
+
+byte checkUpdatedIoValues( 
+        const String & header,
+        String & output );
 
 // Replace with your network credentials
 const char* ssid     = "TP-Link_AABA";
@@ -17,7 +47,9 @@ WiFiServer server(80);
 // Variable to store the HTTP request
 String header;
 
-// Auxiliar variables to store the current output state
+// global int array to store the current output state
+int outputStates[8] = {0,0,0,0,0,0,0,0};
+
 String output5State = "off";
 String output4State = "off";
 
@@ -121,11 +153,18 @@ void loop()
                     //
                     if (currentLine.length() == 0) 
                     {
+                        String commandOutput = "";
+                        String ioOutput = "";
+                        byte address = checkForHeaderCommands( header, commandOutput );
+
+                        if( 0 == address )
+                        {
+                            checkUpdatedIoValues( header, ioOutput );
+                        }
+
                         writeHtmlPageHeaders( client );
-                        String output = "";
-                        checkUpdatedIoValues( header, output );
                         writeHtmlPageCSS( client );
-                        writeHtmlPageData( client );
+                        writeHtmlPageData( client, commandOutput, ioOutput );
                         break;
                     }
                     else 
@@ -149,63 +188,170 @@ void loop()
         Serial.println("");
     }
 }
+#else 
+#include <iostream>
+#include <string>
 
-void checkForHeaderCommands( String & header )
+int8_t checkForHeaderCommands(
+        const std::string & header,
+        std::string & output );
+
+int8_t checkUpdatedIoValues( 
+        const std::string & header,
+        std::string & output );
+
+
+// Variable to store the HTTP request
+std::string header;
+
+// global int array to store the current output state
+int outputStates[8] = {0,0,0,0,0,0,0,0};
+
+std::string output5State = "off";
+std::string output4State = "off";
+
+// Assign output variables to GPIO pins
+const int output5 = 5;
+const int output4 = 4;
+
+int main( 
+        int argc, 
+        const char * argv[] )
 {
-    if (header.indexOf("GET /i2c/scan") >= 0)
+    std::string commandOutput = "";
+    std::string ioOutput = "";
+    int8_t address = checkForHeaderCommands( header, commandOutput );
+
+    if( 0 == address )
     {
-
-
-
-        Serial.println("GPIO 5 on");
-        output5State = "on";
-        digitalWrite(output5, HIGH);
+        checkUpdatedIoValues( header, ioOutput );
     }
+
+    //writeHtmlPageHeaders( client );
+    //writeHtmlPageCSS( client );
+    //writeHtmlPageData( client, output );
+
 }
+#endif
 
-
-byte checkUpdatedIoValues( 
+#if RUN_ON_ESP8266
+byte checkForHeaderCommands(
         const String & header,
         String & output )
 {
-    // turns the GPIOs on and off
-    if (header.indexOf("GET /5/on") >= 0)
+    if( header.indexOf("Get /scanI2C") >= 0)
     {
-        Serial.println("GPIO 5 on");
-        output5State = "on";
-        digitalWrite(output5, HIGH);
-    }
-    else if (header.indexOf("GET /5/off") >= 0)
-    {
-        Serial.println("GPIO 5 off");
-        output5State = "off";
-        digitalWrite(output5, LOW);
-    } 
-    else if (header.indexOf("GET /4/on") >= 0) 
-    {
-        Serial.println("GPIO 4 on");
-        output4State = "on";
-        digitalWrite(output4, HIGH);
-    }
-    else if (header.indexOf("GET /4/off") >= 0) 
-    {
-        Serial.println("GPIO 4 off");
-        output4State = "off";
-        digitalWrite(output4, LOW);
-    }
-    else if( header.indexOf("Get /scanI2C") >= 0)
-    {
-        return scan_I2C_for_mcp23017( output );
+        return scan_I2C_for_mcp23017(output);
     }
     else if( header.indexOf("Get /sketch") >= 0)
     {
         display_Running_Sketch(output);
     }
 
-    return -1;
+    return 0;
 }
+#else
+int8_t checkForHeaderCommands(
+        const std::string & header,
+        std::string & output )
+{
+    if( header.indexOf("Get /scanI2C") >= 0)
+    {
+        return scan_I2C_for_mcp23017(output);
+    }
+    else if( header.indexOf("Get /sketch") >= 0)
+    {
+        display_Running_Sketch(output);
+    }
 
-void writeHtmlPageData( WiFiClient & client )
+    return 0;
+}
+#endif
+
+#if RUN_ON_ESP8266
+byte checkUpdatedIoValues( 
+        const String & header,
+        String & output )
+{
+    // turns the GPIOs on and off
+    if (header.indexOf("GET /1/on") >= 0)
+    {
+        Serial.println("GPIO 1 on");
+        //output5State = "on";
+        outputStates[0] = 1;
+
+        digitalWrite(output5, HIGH);
+    }
+    else if (header.indexOf("GET /1/off") >= 0)
+    {
+        Serial.println("GPIO 1 off");
+        //output5State = "off";
+        outputStates[0] = 0;
+        digitalWrite(output5, LOW);
+    } 
+    else if (header.indexOf("GET /2/on") >= 0) 
+    {
+        Serial.println("GPIO 2 on");
+        //output4State = "on";
+        outputStates[1] = 1;
+        digitalWrite(output4, HIGH);
+    }
+    else if (header.indexOf("GET /2/off") >= 0) 
+    {
+        Serial.println("GPIO 2 off");
+        //output4State = "off";
+        outputStates[1] = 0;
+        digitalWrite(output4, LOW);
+    }
+
+    return 0;
+}
+#else
+int8_t checkUpdatedIoValues( 
+        const std::string & header,
+        std::string & output )
+{
+    // turns the GPIOs on and off
+    if (header.indexOf("GET /1/on") >= 0)
+    {
+        Serial.println("GPIO 1 on");
+        //output5State = "on";
+        outputStates[0] = 1;
+
+        digitalWrite(output5, HIGH);
+    }
+    else if (header.indexOf("GET /1/off") >= 0)
+    {
+        Serial.println("GPIO 1 off");
+        //output5State = "off";
+        outputStates[0] = 0;
+        digitalWrite(output5, LOW);
+    } 
+    else if (header.indexOf("GET /2/on") >= 0) 
+    {
+        Serial.println("GPIO 2 on");
+        //output4State = "on";
+        outputStates[1] = 1;
+        digitalWrite(output4, HIGH);
+    }
+    else if (header.indexOf("GET /2/off") >= 0) 
+    {
+        Serial.println("GPIO 2 off");
+        //output4State = "off";
+        outputStates[1] = 0;
+        digitalWrite(output4, LOW);
+    }
+
+    return 0;
+}
+#endif
+
+
+#if RUN_ON_ESP8266
+void writeHtmlPageData( 
+        WiFiClient & client,
+        const String & commandOutput,
+        const String & ioOutput )
 {
     client.println("<body><h1>Freds ESP8266 MCP23017 Controller</h1>");
 
@@ -281,51 +427,71 @@ void writeHtmlPageCSS( WiFiClient & client )
 // https://forum.arduino.cc/t/solved-esp-01-i2c-mcp23017-and-the-arduino-ide/932889/11
 // refactored into function that dumps to web page as scan takes place instead of Serial.println
 //
-byte scan_I2C_for_mcp23017( String & output )
+// changed to break on the first I2C device found and return the address
+//
+// TODO: add a starting address so the scan can continue from whatever the last
+// returned address or another starting address for additional capability
+//
+byte scan_I2C_for_mcp23017(
+        String & output,
+        const bool printSerial )
 {
     byte error = 0;
     byte address = 0;
     int nDevices = 0;
+    output = "";
 
-    Serial.println("Scanning...");
+    if( printSerial ) Serial.println("Scanning...");
+    output.concat("Scanning for I2C devices...\n");
 
-    for(address = 1; address < 127; address++ ) 
+    for( address = 1; (address < 127) && (nDevices < 1); address++ ) 
     {
         Wire.beginTransmission(address);
         error = Wire.endTransmission();
 
         if (error == 0)
         {
-            Serial.print("I2C device found at address 0x");
+            if( printSerial ) Serial.print("I2C device found at address 0x");
+            output.concat("I2C device found at address 0x");
 
             if (address<16) 
             {
-                Serial.print("0");
+                if( printSerial ) Serial.print("0");
+                output.concat("0");
             }
 
-            Serial.println(address,HEX);
+            if( printSerial ) Serial.println(address,HEX);
+            output.concat( String(address,HEX) );
+            output.concat("\n");
             nDevices++;
         }
         else if (error==4) 
         {
-            Serial.print("Unknow error at address 0x");
+            if( printSerial ) Serial.print("Unknow error at address 0x");
+            output.concat("Unknow error at address 0x");
 
             if (address<16) 
             {
-                Serial.print("0");
+                if( printSerial ) Serial.print("0");
+                output.concat("0");
             }
-            Serial.println(address,HEX);
+
+            if( printSerial ) Serial.println(address,HEX);
+            output.concat( String(address,HEX) );
+            output.concat("\n");
         }    
     }
 
     if (nDevices == 0) 
     {
-        Serial.println("No I2C devices found\n");
+        if( printSerial ) Serial.println("No I2C devices found\n");
+        output.concat("No I2C devices found\n");
         address = 0;
     }
     else
     {
-        Serial.println("done\n");
+        if( printSerial ) Serial.println("done\n");
+        output.concat("done\n");
     }
 
     return address;        
@@ -353,3 +519,4 @@ void display_Running_Sketch( String & output )
     Serial.print(__TIME__);
     Serial.print("\n");
 }
+#endif
