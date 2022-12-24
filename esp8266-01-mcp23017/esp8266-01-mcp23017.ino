@@ -37,6 +37,21 @@ byte checkUpdatedIoValues(
         const String & header,
         String & output );
 
+void writeHtmlPageData( 
+        WiFiClient & client,
+        const String & commandOutput,
+        const String & ioOutput );
+
+void displayCurrentOutputs(
+        WiFiClient & client );
+
+void writeHtmlPageHeaders(
+        WiFiClient & client );
+
+void writeHtmlPageCSS(
+        WiFiClient & client );
+
+
 // Replace with your network credentials
 const char* ssid     = "TP-Link_AABA";
 const char* password = "08065452";
@@ -200,6 +215,20 @@ int8_t checkUpdatedIoValues(
         const std::string & header,
         std::string & output );
 
+void writeHtmlPageData( 
+        const std::string & commandOutput,
+        const std::string & ioOutput );
+
+void displayCurrentOutputs( void );
+void writeHtmlPageHeaders( void );
+void writeHtmlPageCSS( void );
+
+int8_t scan_I2C_for_mcp23017(
+        std::string & output,
+        const bool printSerial = false );
+
+void display_Running_Sketch( std::string & output );
+
 
 // Variable to store the HTTP request
 std::string header;
@@ -227,9 +256,9 @@ int main(
         checkUpdatedIoValues( header, ioOutput );
     }
 
-    //writeHtmlPageHeaders( client );
-    //writeHtmlPageCSS( client );
-    //writeHtmlPageData( client, output );
+    writeHtmlPageHeaders();
+    writeHtmlPageCSS();
+    writeHtmlPageData( commandOutput, ioOutput );
 
 }
 #endif
@@ -255,11 +284,11 @@ int8_t checkForHeaderCommands(
         const std::string & header,
         std::string & output )
 {
-    if( header.indexOf("Get /scanI2C") >= 0)
+    if( header.find("Get /scanI2C") != std::string::npos)
     {
         return scan_I2C_for_mcp23017(output);
     }
-    else if( header.indexOf("Get /sketch") >= 0)
+    else if( header.find("Get /sketch") != std::string::npos)
     {
         display_Running_Sketch(output);
     }
@@ -311,6 +340,7 @@ int8_t checkUpdatedIoValues(
         const std::string & header,
         std::string & output )
 {
+#if 0 // not really relevant to the html output yet.
     // turns the GPIOs on and off
     if (header.indexOf("GET /1/on") >= 0)
     {
@@ -341,6 +371,7 @@ int8_t checkUpdatedIoValues(
         outputStates[1] = 0;
         digitalWrite(output4, LOW);
     }
+#endif
 
     return 0;
 }
@@ -386,6 +417,45 @@ void writeHtmlPageData(
     // The HTTP response ends with another blank line
     client.println();
 }
+#else
+void writeHtmlPageData( 
+        const std::string & commandOutput,
+        const std::string & ioOutput )
+{
+    std::cout << "<body><h1>Freds ESP8266 MCP23017 Controller</h1>";
+
+    // Display current state, and ON/OFF buttons for GPIO 5  
+    std::cout << "<p>GPIO 5 - State " + output5State + "</p>";
+    // If the output5State is off, it displays the ON button       
+
+    if (output5State=="off") 
+    {
+        std::cout << "<p><a href=\"/5/on\"><button class=\"button\">ON</button></a></p>";
+    }
+    else
+    {
+        std::cout << "<p><a href=\"/5/off\"><button class=\"button button2\">OFF</button></a></p>";
+    } 
+
+    // Display current state, and ON/OFF buttons for GPIO 4  
+    std::cout << "<p>GPIO 4 - State " + output4State + "</p>";
+
+    // If the output4State is off, it displays the ON button       
+    if (output4State=="off") 
+    {
+        std::cout << "<p><a href=\"/4/on\"><button class=\"button\">ON</button></a></p>";
+    }
+    else
+    {
+        std::cout << "<p><a href=\"/4/off\"><button class=\"button button2\">OFF</button></a></p>";
+    }
+
+    std::cout << "</body></html>";
+
+    // The HTTP response ends with another blank line
+    std::cout << "\r\n\r\n" << std::endl;
+}
+#endif
 
 //
 // so we have 16 additional IO ports over the I2C bus with the MCP23017
@@ -393,11 +463,19 @@ void writeHtmlPageData(
 // then we want to read a couple buttons to check inputs
 // sounds fun and exciting for sure.  need to find my gvimrc file.  bah.
 //
+#if RUN_ON_ESP8266
 void displayCurrentOutputs( WiFiClient & client )
 {
 
 }
+#else
+void displayCurrentOutputs( void )
+{
 
+}
+#endif
+
+#if RUN_ON_ESP8266
 void writeHtmlPageHeaders( WiFiClient & client )
 {
     // HTTP headers always start with a response code (e.g. HTTP/1.1 200 OK)
@@ -408,7 +486,20 @@ void writeHtmlPageHeaders( WiFiClient & client )
     client.println("Connection: close");
     client.println();
 }
+#else
+void writeHtmlPageHeaders( void )
+{
+    // HTTP headers always start with a response code (e.g. HTTP/1.1 200 OK)
+    // and a content-type so the client knows what's coming, then a blank line:
+    //
+    std::cout << "HTTP/1.1 200 OK" << std::endl;
+    std::cout << "Content-type:text/html" << std::endl;
+    std::cout << "Connection: close" << std::endl;
+    std::cout << "\r\n\r\n" << std::endl;
+}
+#endif
 
+#if RUN_ON_ESP8266
 void writeHtmlPageCSS( WiFiClient & client )
 {
     client.println("<!DOCTYPE html><html>");
@@ -421,6 +512,22 @@ void writeHtmlPageCSS( WiFiClient & client )
     client.println("text-decoration: none; font-size: 30px; margin: 2px; cursor: pointer;}");
     client.println(".button2 {background-color: #77878A;}</style></head>");
 }
+#else
+void writeHtmlPageCSS( void )
+{
+    std::cout << "<!DOCTYPE html><html>" << std::endl;
+    std::cout << "<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">" << std::endl;
+    std::cout << "<link rel=\"icon\" href=\"data:,\">" << std::endl;
+
+    // CSS to style the on/off buttons 
+    // Feel free to change the background-color and font-size attributes to fit your preferences
+    //
+    std::cout << "<style>html { font-family: Helvetica; display: inline-block; margin: 0px auto; text-align: center;}" << std::endl;
+    std::cout << ".button { background-color: #195B6A; border: none; color: white; padding: 16px 40px;" << std::endl;
+    std::cout << "text-decoration: none; font-size: 30px; margin: 2px; cursor: pointer;}" << std::endl;
+    std::cout << ".button2 {background-color: #77878A;}</style></head>" << std::endl;
+}
+#endif
 
 //
 // I2C bus scanning code taken from 
@@ -432,6 +539,7 @@ void writeHtmlPageCSS( WiFiClient & client )
 // TODO: add a starting address so the scan can continue from whatever the last
 // returned address or another starting address for additional capability
 //
+#if RUN_ON_ESP8266
 byte scan_I2C_for_mcp23017(
         String & output,
         const bool printSerial )
@@ -496,6 +604,74 @@ byte scan_I2C_for_mcp23017(
 
     return address;        
 }
+#else
+int8_t scan_I2C_for_mcp23017(
+        std::string & output,
+        const bool printSerial )
+{
+    int8_t address = 0;
+#if 0
+    int8_t error = 0;
+    int nDevices = 0;
+    output = "";
+
+    if( printSerial ) Serial.println("Scanning...");
+    output.concat("Scanning for I2C devices...\n");
+
+    for( address = 1; (address < 127) && (nDevices < 1); address++ ) 
+    {
+        Wire.beginTransmission(address);
+        error = Wire.endTransmission();
+
+        if (error == 0)
+        {
+            if( printSerial ) Serial.print("I2C device found at address 0x");
+            output.concat("I2C device found at address 0x");
+
+            if (address<16) 
+            {
+                if( printSerial ) Serial.print("0");
+                output.concat("0");
+            }
+
+            if( printSerial ) Serial.println(address,HEX);
+            output.concat( String(address,HEX) );
+            output.concat("\n");
+            nDevices++;
+        }
+        else if (error==4) 
+        {
+            if( printSerial ) Serial.print("Unknow error at address 0x");
+            output.concat("Unknow error at address 0x");
+
+            if (address<16) 
+            {
+                if( printSerial ) Serial.print("0");
+                output.concat("0");
+            }
+
+            if( printSerial ) Serial.println(address,HEX);
+            output.concat( String(address,HEX) );
+            output.concat("\n");
+        }    
+    }
+
+    if (nDevices == 0) 
+    {
+        if( printSerial ) Serial.println("No I2C devices found\n");
+        output.concat("No I2C devices found\n");
+        address = 0;
+    }
+    else
+    {
+        if( printSerial ) Serial.println("done\n");
+        output.concat("done\n");
+    }
+
+#endif
+    return address;        
+}
+#endif
 
 //
 // displays at startup the Sketch running in the Arduino
@@ -503,6 +679,7 @@ byte scan_I2C_for_mcp23017(
 // refactored into function that dumps to web page as scan takes place instead of Serial.println
 //
 
+#if RUN_ON_ESP8266
 void display_Running_Sketch( String & output )
 {
     String the_path = __FILE__;
@@ -518,5 +695,32 @@ void display_Running_Sketch( String & output )
     Serial.print(" at ");
     Serial.print(__TIME__);
     Serial.print("\n");
+}
+#else
+void display_Running_Sketch( std::string & output )
+{
+    std::string the_path = __FILE__;
+    std::string the_sketchname = the_path;
+    size_t slash_loc = the_path.rfind('/');
+
+    if( slash_loc != std::string::npos )
+    {
+        std::string the_cpp_name = the_path.substr(slash_loc+1);
+
+        size_t dot_loc = the_cpp_name.rfind('.');
+
+        if( dot_loc != std::string::npos )
+        {
+            the_sketchname = the_cpp_name.substr(0, dot_loc);
+        }
+    }
+
+    output.append("\nArduino is running Sketch: ");
+    output.append(the_sketchname);
+    output.append("\nCompiled on: ");
+    output.append(__DATE__);
+    output.append(" at ");
+    output.append(__TIME__);
+    output.append("\n");
 }
 #endif
