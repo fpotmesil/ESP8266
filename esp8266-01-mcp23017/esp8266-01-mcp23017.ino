@@ -384,11 +384,23 @@ void writeHtmlPageData(
         const String & commandOutput,
         const String & ioOutput )
 {
-    client.println("<body><h1>Freds ESP8266 MCP23017 Controller</h1>");
+    client.println("<body><h1>ESP8266-01 MCP23017 Controller</h1>");
 
     // Display current state, and ON/OFF buttons for GPIO 5  
     client.println("<p>GPIO 5 - State " + output5State + "</p>");
     // If the output5State is off, it displays the ON button       
+    //
+#if 0
+    <div>
+        <div class="titlediv">GPIO 5 - State off</div>
+        <div class="buttondiv"><a href="/5/on"><button class="button2">ON</button></a></div>
+    </div>
+
+    <div>
+        <div class="titlediv">GPIO 4 - State off</div>
+        <div class="buttondiv"><a href="/4/on"><button class="button">ON</button></a></div>
+    </div>
+#endif
 
     if (output5State=="off") 
     {
@@ -412,6 +424,7 @@ void writeHtmlPageData(
         client.println("<p><a href=\"/4/off\"><button class=\"button button2\">OFF</button></a></p>");
     }
 
+
     client.println("</body></html>");
 
     // The HTTP response ends with another blank line
@@ -422,35 +435,35 @@ void writeHtmlPageData(
         const std::string & commandOutput,
         const std::string & ioOutput )
 {
-    std::cout << "<body><h1>Freds ESP8266 MCP23017 Controller</h1>";
+    std::cout << "<body><h1>ESP8266-01 MCP23017 Controller</h1>" << std::endl;
 
     // Display current state, and ON/OFF buttons for GPIO 5  
-    std::cout << "<p>GPIO 5 - State " + output5State + "</p>";
+    std::cout << "<p>GPIO 5 - State " + output5State + "</p>" << std::endl;
     // If the output5State is off, it displays the ON button       
 
     if (output5State=="off") 
     {
-        std::cout << "<p><a href=\"/5/on\"><button class=\"button\">ON</button></a></p>";
+        std::cout << "<p><a href=\"/5/on\"><button class=\"button\">ON</button></a></p>" << std::endl;
     }
     else
     {
-        std::cout << "<p><a href=\"/5/off\"><button class=\"button button2\">OFF</button></a></p>";
+        std::cout << "<p><a href=\"/5/off\"><button class=\"button button2\">OFF</button></a></p>" << std::endl;
     } 
 
     // Display current state, and ON/OFF buttons for GPIO 4  
-    std::cout << "<p>GPIO 4 - State " + output4State + "</p>";
+    std::cout << "<p>GPIO 4 - State " + output4State + "</p>" << std::endl;
 
     // If the output4State is off, it displays the ON button       
     if (output4State=="off") 
     {
-        std::cout << "<p><a href=\"/4/on\"><button class=\"button\">ON</button></a></p>";
+        std::cout << "<p><a href=\"/4/on\"><button class=\"button\">ON</button></a></p>" << std::endl;
     }
     else
     {
-        std::cout << "<p><a href=\"/4/off\"><button class=\"button button2\">OFF</button></a></p>";
+        std::cout << "<p><a href=\"/4/off\"><button class=\"button button2\">OFF</button></a></p>" << std::endl;
     }
 
-    std::cout << "</body></html>";
+    std::cout << "</body></html>" << std::endl;
 
     // The HTTP response ends with another blank line
     std::cout << "\r\n\r\n" << std::endl;
@@ -505,12 +518,15 @@ void writeHtmlPageCSS( WiFiClient & client )
     client.println("<!DOCTYPE html><html>");
     client.println("<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
     client.println("<link rel=\"icon\" href=\"data:,\">");
-    // CSS to style the on/off buttons 
-    // Feel free to change the background-color and font-size attributes to fit your preferences
-    client.println("<style>html { font-family: Helvetica; display: inline-block; margin: 0px auto; text-align: center;}");
-    client.println(".button { background-color: #195B6A; border: none; color: white; padding: 16px 40px;");
-    client.println("text-decoration: none; font-size: 30px; margin: 2px; cursor: pointer;}");
-    client.println(".button2 {background-color: #77878A;}</style></head>");
+    client.println("<style> html { font-family: Helvetica; display: inline-block; margin: 0px auto; text-align: center;}");
+    client.println(".button { background-color: #778899; color: white; padding: 2px 6px 2px 4px;");
+    client.println("text-decoration: none; font-size: 14px; margin: 2px; cursor: pointer;}");
+    client.println(".button2 { background-color: #90EE90; color: white; padding: 2px 6px 2px 4px;");
+    client.println("text-decoration: none; font-size: 14px; margin: 2px; cursor: pointer;}");
+    client.println("div { padding: 4px 3px 2px 5px; width:100%; overflow: hidden; }");
+    client.println(".titlediv { float: left; width: auto; height: 26px; background-color: #FAEBD7; text-align: center;}");
+    client.println(".buttondiv { float: left; width: auto; height: 30px; background-color: #F0FFFF; vertical-align: center;}");
+    client.println("</style></head>");
 }
 #else
 void writeHtmlPageCSS( void )
@@ -523,9 +539,14 @@ void writeHtmlPageCSS( void )
     // Feel free to change the background-color and font-size attributes to fit your preferences
     //
     std::cout << "<style>html { font-family: Helvetica; display: inline-block; margin: 0px auto; text-align: center;}" << std::endl;
-    std::cout << ".button { background-color: #195B6A; border: none; color: white; padding: 16px 40px;" << std::endl;
-    std::cout << "text-decoration: none; font-size: 30px; margin: 2px; cursor: pointer;}" << std::endl;
-    std::cout << ".button2 {background-color: #77878A;}</style></head>" << std::endl;
+    std::cout << ".button { background-color: #778899; color: white; padding: 2px 6px 2px 4px;" << std::endl;
+    std::cout << "text-decoration: none; font-size: 14px; margin: 2px; cursor: pointer;}" << std::endl;
+    std::cout << ".button2 { background-color: #90EE90; color: white; padding: 2px 6px 2px 4px;" << std::endl;
+    std::cout << "text-decoration: none; font-size: 14px; margin: 2px; cursor: pointer;}" << std::endl;
+    std::cout << "div { padding: 4px 3px 2px 5px; width:100%; overflow: hidden; }" << std::endl;
+    std::cout << ".titlediv { float: left; width: auto; height: 26px; background-color: #FAEBD7; text-align: center;}" << std::endl;
+    std::cout << ".buttondiv { float: left; width: auto; height: 30px; background-color: #F0FFFF; vertical-align: center;}" << std::endl;
+    std::cout << "</style></head>" << std::endl;
 }
 #endif
 
