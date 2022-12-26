@@ -387,46 +387,31 @@ void writeHtmlPageData(
     client.println("<body><h1>ESP8266-01 MCP23017 Controller</h1>");
 
     // Display current state, and ON/OFF buttons for GPIO 5  
-    client.println("<p>GPIO 5 - State " + output5State + "</p>");
-    // If the output5State is off, it displays the ON button       
-    //
-#if 0
-    <div>
-        <div class="titlediv">GPIO 5 - State off</div>
-        <div class="buttondiv"><a href="/5/on"><button class="button2">ON</button></a></div>
-    </div>
-
-    <div>
-        <div class="titlediv">GPIO 4 - State off</div>
-        <div class="buttondiv"><a href="/4/on"><button class="button">ON</button></a></div>
-    </div>
-#endif
+    client.println("<div>\n<div class=\"titlediv\">GPIO 5 - State " + output5State + "</div>\n");
 
     if (output5State=="off") 
     {
-        client.println("<p><a href=\"/5/on\"><button class=\"button\">ON</button></a></p>");
+        client.println("<div class=\"buttondiv\"><a href=\"/5/on\"><button class=\"button2\">ON</button></a></div>\n</div>\n");
     }
     else
     {
-        client.println("<p><a href=\"/5/off\"><button class=\"button button2\">OFF</button></a></p>");
+        client.println("<div class=\"buttondiv\"><a href=\"/5/off\"><button class=\"button\">OFF</button></a></div>\n</div>\n");
     } 
 
     // Display current state, and ON/OFF buttons for GPIO 4  
-    client.println("<p>GPIO 4 - State " + output4State + "</p>");
+    client.println("<div>\n<div class=\"titlediv\">GPIO 4 - State " + output4State + "</div>\n");
 
     // If the output4State is off, it displays the ON button       
     if (output4State=="off") 
     {
-        client.println("<p><a href=\"/4/on\"><button class=\"button\">ON</button></a></p>");
+        client.println("<div class=\"buttondiv\"><a href=\"/4/on\"><button class=\"button2\">ON</button></a></div>\n</div>\n");
     }
     else
     {
-        client.println("<p><a href=\"/4/off\"><button class=\"button button2\">OFF</button></a></p>");
+        client.println("<div class=\"buttondiv\"><a href=\"/4/off\"><button class=\"button\">OFF</button></a></div>\n</div>\n");
     }
 
-
     client.println("</body></html>");
-
     // The HTTP response ends with another blank line
     client.println();
 }
@@ -438,29 +423,30 @@ void writeHtmlPageData(
     std::cout << "<body><h1>ESP8266-01 MCP23017 Controller</h1>" << std::endl;
 
     // Display current state, and ON/OFF buttons for GPIO 5  
-    std::cout << "<p>GPIO 5 - State " + output5State + "</p>" << std::endl;
+    std::cout << "<div>\n<div class=\"titlediv\">GPIO 5 - State " + output5State + "</div>\n" 
+        << std::endl;
     // If the output5State is off, it displays the ON button       
 
     if (output5State=="off") 
     {
-        std::cout << "<p><a href=\"/5/on\"><button class=\"button\">ON</button></a></p>" << std::endl;
+        std::cout << "<div class=\"buttondiv\"><a href=\"/5/on\"><button class=\"button2\">ON</button></a></div>\n</div>\n" << std::endl;
     }
     else
     {
-        std::cout << "<p><a href=\"/5/off\"><button class=\"button button2\">OFF</button></a></p>" << std::endl;
+        std::cout << "<div class=\"buttondiv\"><a href=\"/5/off\"><button class=\"button\">OFF</button></a></div>\n</div>\n" << std::endl;
     } 
 
     // Display current state, and ON/OFF buttons for GPIO 4  
-    std::cout << "<p>GPIO 4 - State " + output4State + "</p>" << std::endl;
+    std::cout << "<div>\n<div class=\"titlediv\">GPIO 4 - State " + output4State + "</div>\n" << std::endl;
 
     // If the output4State is off, it displays the ON button       
     if (output4State=="off") 
     {
-        std::cout << "<p><a href=\"/4/on\"><button class=\"button\">ON</button></a></p>" << std::endl;
+        std::cout << "<div class=\"buttondiv\"><a href=\"/4/on\"><button class=\"button2\">ON</button></a></div>\n</div>\n" << std::endl;
     }
     else
     {
-        std::cout << "<p><a href=\"/4/off\"><button class=\"button button2\">OFF</button></a></p>" << std::endl;
+        std::cout << "<div class=\"buttondiv\"><a href=\"/4/off\"><button class=\"button\">OFF</button></a></div>\n</div>\n" << std::endl;
     }
 
     std::cout << "</body></html>" << std::endl;
