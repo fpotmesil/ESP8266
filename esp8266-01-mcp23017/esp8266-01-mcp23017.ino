@@ -62,8 +62,16 @@ WiFiServer server(80);
 // Variable to store the HTTP request
 String header;
 
-// global int array to store the current output state
-int outputStates[8] = {0,0,0,0,0,0,0,0};
+//
+// store the output states for Port A 0-7
+//
+int outputStates[8] = {0,1,0,1,0,1,0,1};
+
+//
+// store the input states for Port B 0-7
+//
+int inputStates[8] = {0,0,0,0,0,0,0,0};
+
 
 String output5State = "off";
 String output4State = "off";
@@ -233,8 +241,15 @@ void display_Running_Sketch( std::string & output );
 // Variable to store the HTTP request
 std::string header;
 
-// global int array to store the current output state
-int outputStates[8] = {0,0,0,0,0,0,0,0};
+//
+// store the output states for Port A 0-7
+//
+int outputStates[8] = {0,1,0,1,0,1,0,1};
+
+//
+// store the input states for Port B 0-7
+//
+int inputStates[8] = {0,0,0,0,0,0,0,0};
 
 std::string output5State = "off";
 std::string output4State = "off";
@@ -386,18 +401,27 @@ void writeHtmlPageData(
 {
     client.println("<body><h1>ESP8266-01 MCP23017 Controller</h1>");
 
-    // Display current state, and ON/OFF buttons for GPIO 5  
-    client.println("<div>\n<div class=\"titlediv\">GPIO 5 - State " + output5State + "</div>\n");
-
-    if (output5State=="off") 
+    for( int i = 0; i < 8; i++ )
     {
-        client.println("<div class=\"buttondiv\"><a href=\"/5/on\"><button class=\"button2\">ON</button></a></div>\n</div>\n");
+        //
+        // Using MCP23017 Port A 0-7 for led outputs for simplicity.
+        //
+        client.println("<div>\n<div class=\"titlediv\">Port A " + String(i) + ": State " +
+                (outputStates[i] ? "ON" : "OFF") + "</div>\n");
+
+        if( outputStates[i] ) 
+        {
+            client.println("<div class=\"buttondiv\"><a href=\"/" + String(i+1) +
+                    "/on\"><button class=\"button2\">ON</button></a></div>\n</div>\n");
+        }
+        else
+        {
+            client.println("<div class=\"buttondiv\"><a href=\"/" + String(i+1) + 
+                    "/off\"><button class=\"button\">OFF</button></a></div>\n</div>\n");
+        } 
+
     }
-    else
-    {
-        client.println("<div class=\"buttondiv\"><a href=\"/5/off\"><button class=\"button\">OFF</button></a></div>\n</div>\n");
-    } 
-
+#if 0
     // Display current state, and ON/OFF buttons for GPIO 4  
     client.println("<div>\n<div class=\"titlediv\">GPIO 4 - State " + output4State + "</div>\n");
 
@@ -410,6 +434,7 @@ void writeHtmlPageData(
     {
         client.println("<div class=\"buttondiv\"><a href=\"/4/off\"><button class=\"button\">OFF</button></a></div>\n</div>\n");
     }
+#endif
 
     client.println("</body></html>");
     // The HTTP response ends with another blank line
@@ -422,6 +447,27 @@ void writeHtmlPageData(
 {
     std::cout << "<body><h1>ESP8266-01 MCP23017 Controller</h1>" << std::endl;
 
+    for( int i = 0; i < 8; i++ )
+    {
+        //
+        // Using MCP23017 Port A 0-7 for led outputs for simplicity.
+        //
+        std::cout << "<div>\n<div class=\"titlediv\">Port A " << i << ": State " << 
+                (outputStates[i] ? "ON" : "OFF") << "</div>\n" << std::endl;
+
+        if( outputStates[i] ) 
+        {
+            std::cout << "<div class=\"buttondiv\"><a href=\"/" << (i+1) <<
+                    "/on\"><button class=\"button2\">ON</button></a></div>\n</div>\n" << std::endl;
+        }
+        else
+        {
+            std::cout << "<div class=\"buttondiv\"><a href=\"/" << (i+1) <<
+                    "/off\"><button class=\"button\">OFF</button></a></div>\n</div>\n" << std::endl;
+        } 
+    }
+
+#if 0
     // Display current state, and ON/OFF buttons for GPIO 5  
     std::cout << "<div>\n<div class=\"titlediv\">GPIO 5 - State " + output5State + "</div>\n" 
         << std::endl;
@@ -448,6 +494,7 @@ void writeHtmlPageData(
     {
         std::cout << "<div class=\"buttondiv\"><a href=\"/4/off\"><button class=\"button\">OFF</button></a></div>\n</div>\n" << std::endl;
     }
+#endif
 
     std::cout << "</body></html>" << std::endl;
 
