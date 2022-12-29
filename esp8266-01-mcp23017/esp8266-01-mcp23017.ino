@@ -400,44 +400,31 @@ void writeHtmlPageData(
         const String & ioOutput )
 {
     client.println("<body><h1>ESP8266-01 MCP23017 Controller</h1>");
+    client.println("<table id=\"outputs\">\n");
+    client.println("<tr>\n<th>Output Port and Number</th>\n");
+    client.println("<th>Current State</th>\n</tr>\n");
 
     for( int i = 0; i < 8; i++ )
     {
         //
         // Using MCP23017 Port A 0-7 for led outputs for simplicity.
         //
-        client.println("<div>\n<div class=\"titlediv\">Port A " + String(i) + ": State " +
-                (outputStates[i] ? "ON" : "OFF") + "</div>\n");
+        client.println("<tr>\n<td>Port A " + String(i) + "</td>\n");
 
         if( outputStates[i] ) 
         {
-            client.println("<div class=\"buttondiv\"><a href=\"/" + String(i+1) +
-                    "/on\"><button class=\"button2\">ON</button></a></div>\n</div>\n");
+            client.println("<td><a href=\"/" + String(i+1) +
+                    "/on\"><button class=\"button2\">ON</button></a></td>\n</tr>\n");
         }
         else
         {
-            client.println("<div class=\"buttondiv\"><a href=\"/" + String(i+1) + 
-                    "/off\"><button class=\"button\">OFF</button></a></div>\n</div>\n");
+            client.println("<td><a href=\"/" + String(i+1) + 
+                    "/off\"><button class=\"button\">OFF</button></a></td>\n</tr>\n");
         } 
-
     }
-#if 0
-    // Display current state, and ON/OFF buttons for GPIO 4  
-    client.println("<div>\n<div class=\"titlediv\">GPIO 4 - State " + output4State + "</div>\n");
 
-    // If the output4State is off, it displays the ON button       
-    if (output4State=="off") 
-    {
-        client.println("<div class=\"buttondiv\"><a href=\"/4/on\"><button class=\"button2\">ON</button></a></div>\n</div>\n");
-    }
-    else
-    {
-        client.println("<div class=\"buttondiv\"><a href=\"/4/off\"><button class=\"button\">OFF</button></a></div>\n</div>\n");
-    }
-#endif
-
-    client.println("</body></html>");
-    // The HTTP response ends with another blank line
+    client.println("</table>\n</body>\n</html>");
+    // End HTTP response with blank line
     client.println();
 }
 #else
@@ -446,24 +433,26 @@ void writeHtmlPageData(
         const std::string & ioOutput )
 {
     std::cout << "<body><h1>ESP8266-01 MCP23017 Controller</h1>" << std::endl;
+    std::cout << "<table id=\"outputs\">\n" << std::endl;
+    std::cout << "<tr>\n<th>Output Port and Number</th>\n" << std::endl;
+    std::cout << "<th>Current State</th>\n</tr>\n" << std::endl;
 
     for( int i = 0; i < 8; i++ )
     {
         //
         // Using MCP23017 Port A 0-7 for led outputs for simplicity.
         //
-        std::cout << "<div>\n<div class=\"titlediv\">Port A " << i << ": State " << 
-                (outputStates[i] ? "ON" : "OFF") << "</div>\n" << std::endl;
+        std::cout << "<tr>\n<td>Port A " << i << "</td>\n" << std::endl;
 
         if( outputStates[i] ) 
         {
-            std::cout << "<div class=\"buttondiv\"><a href=\"/" << (i+1) <<
-                    "/on\"><button class=\"button2\">ON</button></a></div>\n</div>\n" << std::endl;
+            std::cout << "<td><a href=\"/" << (i+1) <<
+                    "/on\"><button class=\"button2\">ON</button></a></td>\n</tr>\n" << std::endl;
         }
         else
         {
-            std::cout << "<div class=\"buttondiv\"><a href=\"/" << (i+1) <<
-                    "/off\"><button class=\"button\">OFF</button></a></div>\n</div>\n" << std::endl;
+            std::cout << "<td><a href=\"/" << (i+1) <<
+                    "/off\"><button class=\"button\">OFF</button></a></td>\n</tr>\n" << std::endl;
         } 
     }
 
@@ -496,7 +485,7 @@ void writeHtmlPageData(
     }
 #endif
 
-    std::cout << "</body></html>" << std::endl;
+    std::cout << "</table>\n</body>\n</html>\n" << std::endl;
 
     // The HTTP response ends with another blank line
     std::cout << "\r\n\r\n" << std::endl;
@@ -556,9 +545,15 @@ void writeHtmlPageCSS( WiFiClient & client )
     client.println("text-decoration: none; font-size: 14px; margin: 2px; cursor: pointer;}");
     client.println(".button2 { background-color: #90EE90; color: white; padding: 2px 6px 2px 4px;");
     client.println("text-decoration: none; font-size: 14px; margin: 2px; cursor: pointer;}");
-    client.println("div { padding: 4px 3px 2px 5px; width:100%; overflow: hidden; }");
-    client.println(".titlediv { float: left; width: auto; height: 26px; background-color: #FAEBD7; text-align: center;}");
-    client.println(".buttondiv { float: left; width: auto; height: 30px; background-color: #F0FFFF; vertical-align: center;}");
+
+    client.println("#outputs { font-family: Arial, Helvetica, sans-serif; border-collapse: collapse; width: auto; }");
+    client.println("#outputs td, #outputs th { border: 1px solid #ddd; padding: 2px; }");
+    client.println("#outputs td { text-align: center; }");
+    client.println("#outputs tr:nth-child(odd) { background-color: #FAEBD7; }");
+    client.println("#outputs tr:nth-child(even) { background-color: #F2F2F2; }");
+    client.println("#outputs tr:hover { background-color: #DDD; }");
+    client.println("#outputs th { padding-top: 12px; padding-bottom: 12px;  padding-left: 2px; padding-right: 2px; text-align: left; background-color: #04AA6D; color: white; }");
+
     client.println("</style></head>");
 }
 #else
@@ -579,6 +574,15 @@ void writeHtmlPageCSS( void )
     std::cout << "div { padding: 4px 3px 2px 5px; width:100%; overflow: hidden; }" << std::endl;
     std::cout << ".titlediv { float: left; width: auto; height: 26px; background-color: #FAEBD7; text-align: center;}" << std::endl;
     std::cout << ".buttondiv { float: left; width: auto; height: 30px; background-color: #F0FFFF; vertical-align: center;}" << std::endl;
+
+    std::cout << "#outputs { font-family: Arial, Helvetica, sans-serif; border-collapse: collapse; width: auto; }" << std::endl;
+    std::cout << "#outputs td, #outputs th { border: 1px solid #ddd; padding: 2px; }" << std::endl;
+    std::cout << "#outputs td { text-align: center; }" << std::endl;
+    std::cout << "#outputs tr:nth-child(odd) { background-color: #FAEBD7; }" << std::endl;
+    std::cout << "#outputs tr:nth-child(even) { background-color: #F2F2F2; }" << std::endl;
+    std::cout << "#outputs tr:hover { background-color: #DDD; }" << std::endl;
+    std::cout << "#outputs th { padding-top: 12px; padding-bottom: 12px;  padding-left: 2px; padding-right: 2px; text-align: left; background-color: #04AA6D; color: white; }" << std::endl;
+
     std::cout << "</style></head>" << std::endl;
 }
 #endif
