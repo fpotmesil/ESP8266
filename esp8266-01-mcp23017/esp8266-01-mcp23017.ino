@@ -62,6 +62,8 @@ WiFiServer server(80);
 // Variable to store the HTTP request
 String header;
 
+// byte stores the I2C address
+byte i2cAddress = 0;
 //
 // store the output states for Port A 0-7
 //
@@ -241,6 +243,9 @@ void display_Running_Sketch( std::string & output );
 // Variable to store the HTTP request
 std::string header;
 
+// byte stores the I2C address
+int8_t i2cAddress = 0;
+
 //
 // store the output states for Port A 0-7
 //
@@ -400,7 +405,25 @@ void writeHtmlPageData(
         const String & ioOutput )
 {
     client.println("<body><h1>ESP8266-01 MCP23017 Controller</h1>");
+
+    //
+    // first check the I2C address and output depending on whether we 
+    // have successfully initialized the MCP23017 chip yet.
+    // still not sure this will work at all, getting exciting...
+    //
     client.println("<table id=\"outputs\">\n");
+    client.println("<tr>\n<th colspan=\"2\">MCP23017 Address " + 
+            (i2cAddress ? String(i2cAddress) : "Unknown") + "</th>\n</tr>\n" );
+
+    client.println("<tr>\n<td>Scan I2C Bus</td>\n");
+    client.println("<td><a href=\"/scanI2C\"><button class=\"button2\">SCAN</button></a></td>\n</tr>\n");
+
+    client.println("<tr>\n<td>Dump Application Info</td>\n");
+    client.println("<td><a href=\"/info\"><button class=\"button2\">INFO</button></a></td>\n");
+    client.println("</tr>\n</table>\n\n");
+
+
+    client.println("<p><table id=\"outputs\">\n");
     client.println("<tr>\n<th>Output Port and Number</th>\n");
     client.println("<th>Current State</th>\n</tr>\n");
 
@@ -433,7 +456,25 @@ void writeHtmlPageData(
         const std::string & ioOutput )
 {
     std::cout << "<body><h1>ESP8266-01 MCP23017 Controller</h1>" << std::endl;
+    //
+    // first check the I2C address and output depending on whether we 
+    // have successfully initialized the MCP23017 chip yet.
+    // still not sure this will work at all, getting exciting...
+    //
     std::cout << "<table id=\"outputs\">\n" << std::endl;
+    std::cout << "<tr>\n<th colspan=\"2\">MCP23017 Address " <<
+            (i2cAddress ? std::to_string(i2cAddress) : "Unknown") << "</th>\n</tr>\n" << std::endl;
+
+    std::cout << "<tr>\n<td>Scan I2C Bus</td>\n" << std::endl;
+    std::cout << "<td><a href=\"/scanI2C\"><button class=\"button2\">SCAN</button></a></td>\n</tr>\n"
+        << std::endl;
+
+    std::cout << "<tr>\n<td>Dump Application Info</td>\n" << std::endl;
+    std::cout << "<td><a href=\"/info\"><button class=\"button2\">INFO</button></a></td>\n" 
+        << std::endl;;
+    std::cout << "</tr>\n</table>\n\n" << std::endl;
+
+    std::cout << "<p><table id=\"outputs\">\n" << std::endl;
     std::cout << "<tr>\n<th>Output Port and Number</th>\n" << std::endl;
     std::cout << "<th>Current State</th>\n</tr>\n" << std::endl;
 
