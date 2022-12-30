@@ -22,8 +22,8 @@
 #include <Wire.h>
 
 // ESP8266-01 i2c pins (arduino defaults to 4/5)
-#define SDA 0
-#define SCL 2
+#define SDA 0   // GPIO 0
+#define SCL 2   // GPIO 2
 
 byte checkForHeaderCommands(
         const String & header,
@@ -116,7 +116,12 @@ void setup()
     //Serial.print(SDA);
     //Serial.print(")");;
 
-    Wire.begin(SCL,SDA);
+    //
+    // #define SDA 0   // GPIO 0
+    // #define SCL 2   // GPIO 2
+    //
+    // Wire.begin(SCL,SDA);
+    Wire.begin(SDA,SCL);
 
     // Initialize the output variables as outputs
     //pinMode(output5, OUTPUT);
@@ -290,12 +295,12 @@ byte checkForHeaderCommands(
 {
     output.concat("checking for header commands in " + header + " now...\n");
 
-    if( header.indexOf("Get /scanI2C") >= 0)
+    if( header.indexOf("GET /scanI2C") >= 0)
     {
         output.concat("Calling scan_I2C_for_mcp23017() now...\n");
         return scan_I2C_for_mcp23017(output);
     }
-    else if( header.indexOf("Get /initMCP") >= 0)
+    else if( header.indexOf("GET /initMCP") >= 0)
     {
         output.concat("Attempting to initialize mcp23017 at " + String(i2cAddress) + " now...\n");
         Wire.beginTransmission(i2cAddress);
@@ -355,7 +360,7 @@ byte checkForHeaderCommands(
             output.concat("I2C communication ERROR");
         }
     }
-    else if( header.indexOf("Get /info") >= 0)
+    else if( header.indexOf("GET /info") >= 0)
     {
         output.concat("Calling display_Running_Sketch() now...\n");
         display_Running_Sketch(output);
@@ -368,11 +373,11 @@ int8_t checkForHeaderCommands(
         const std::string & header,
         std::string & output )
 {
-    if( header.find("Get /scanI2C") != std::string::npos)
+    if( header.find("GET /scanI2C") != std::string::npos)
     {
         return scan_I2C_for_mcp23017(output);
     }
-    else if( header.find("Get /info") != std::string::npos)
+    else if( header.find("GET /info") != std::string::npos)
     {
         display_Running_Sketch(output);
     }
@@ -759,7 +764,13 @@ byte scan_I2C_for_mcp23017(
             if( printSerial ) Serial.println(address,HEX);
             output.concat( String(address,HEX) );
             output.concat("\n");
-        }    
+        }
+
+        if( nDevices >= 1 )
+        {
+            output.concat("\n  Found an I2C device at " + String(address) + "...breaking loop\n\n");
+            break;
+        }
     }
 
     if (nDevices == 0) 
