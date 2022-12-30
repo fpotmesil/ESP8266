@@ -75,12 +75,12 @@ int outputStates[8] = {0,1,0,1,0,1,0,1};
 int inputStates[8] = {0,0,0,0,0,0,0,0};
 
 
-String output5State = "off";
-String output4State = "off";
+//String output5State = "off";
+//String output4State = "off";
 
 // Assign output variables to GPIO pins
-const int output5 = 5;
-const int output4 = 4;
+//const int output5 = 5;
+//const int output4 = 4;
 
 // Current time
 unsigned long currentTime = millis();
@@ -102,49 +102,49 @@ IPAddress secondaryDNS(192, 168, 0, 1); //optional
 void setup() 
 {
     // put your setup code here, to run once:
-    Serial.begin(115200);
+    // Serial.begin(115200);
 
-    Serial.println("\nI2C Scanner");
-    Serial.print("SDA: ");
-    Serial.println(SDA);
-    Serial.print(" SCL: ");
-    Serial.println(SCL);
+    // Serial.println("\nI2C Scanner");
+    //Serial.print("SDA: ");
+    //Serial.println(SDA);
+    //Serial.print(" SCL: ");
+    //Serial.println(SCL);
 
-    Serial.print("Wire.begin("); 
-    Serial.print(SCL);
-    Serial.print(",");
-    Serial.print(SDA);
-    Serial.print(")");;
+    //Serial.print("Wire.begin("); 
+    //Serial.print(SCL);
+    //Serial.print(",");
+    //Serial.print(SDA);
+    //Serial.print(")");;
 
     Wire.begin(SCL,SDA);
 
     // Initialize the output variables as outputs
-    pinMode(output5, OUTPUT);
-    pinMode(output4, OUTPUT);
+    //pinMode(output5, OUTPUT);
+    //pinMode(output4, OUTPUT);
     // Set outputs to LOW
-    digitalWrite(output5, LOW);
-    digitalWrite(output4, LOW);
+    //digitalWrite(output5, LOW);
+    //digitalWrite(output4, LOW);
 
     // Configures static IP address
     if (!WiFi.config(local_IP, gateway, subnet, primaryDNS, secondaryDNS)) 
     {
-        Serial.println("STA Failed to configure");
+        //Serial.println("STA Failed to configure");
     }
 
     // Connect to Wi-Fi network with SSID and password
-    Serial.print("Connecting to ");
-    Serial.println(ssid);
+    //Serial.print("Connecting to ");
+    //Serial.println(ssid);
     WiFi.begin(ssid, password);
     while (WiFi.status() != WL_CONNECTED) 
     {
         delay(500);
-        Serial.print(".");
+        //Serial.print(".");
     }
     // Print local IP address and start web server
-    Serial.println("");
-    Serial.println("WiFi connected.");
-    Serial.println("IP address: ");
-    Serial.println(WiFi.localIP());
+    //Serial.println("");
+    //Serial.println("WiFi connected.");
+    //Serial.println("IP address: ");
+    //Serial.println(WiFi.localIP());
     server.begin();
 }
 
@@ -154,7 +154,7 @@ void loop()
 
     if (client) 
     {                             // If a new client connects,
-        Serial.println("New Client.");   // print a message out in the serial port
+        //Serial.println("New Client.");   // print a message out in the serial port
         String currentLine = "";      // make a String to hold incoming data from the client
         currentTime = millis();
         previousTime = currentTime;
@@ -167,7 +167,7 @@ void loop()
             if (client.available()) 
             {             // if there's bytes to read from the client,
                 char c = client.read();             // read a byte, then
-                Serial.write(c);                    // print it out the serial monitor
+                //Serial.write(c);                    // print it out the serial monitor
                 header += c;
 
                 if (c == '\n') 
@@ -180,9 +180,9 @@ void loop()
                     {
                         String commandOutput = "";
                         String ioOutput = "";
-                        byte address = checkForHeaderCommands( header, commandOutput );
+                        i2cAddress = checkForHeaderCommands( header, commandOutput );
 
-                        if( 0 == address )
+                        if( i2cAddress > 0 )
                         {
                             checkUpdatedIoValues( header, ioOutput );
                         }
@@ -209,8 +209,8 @@ void loop()
         header = "";
         // Close the connection
         client.stop();
-        Serial.println("Client disconnected.");
-        Serial.println("");
+        //Serial.println("Client disconnected.");
+        //Serial.println("");
     }
 }
 #else 
@@ -256,12 +256,12 @@ int outputStates[8] = {0,1,0,1,0,1,0,1};
 //
 int inputStates[8] = {0,0,0,0,0,0,0,0};
 
-std::string output5State = "off";
-std::string output4State = "off";
+//std::string output5State = "off";
+//std::string output4State = "off";
 
 // Assign output variables to GPIO pins
-const int output5 = 5;
-const int output4 = 4;
+//const int output5 = 5;
+//const int output4 = 4;
 
 int main( 
         int argc, 
@@ -269,9 +269,9 @@ int main(
 {
     std::string commandOutput = "";
     std::string ioOutput = "";
-    int8_t address = checkForHeaderCommands( header, commandOutput );
+    i2cAddress = checkForHeaderCommands( header, commandOutput );
 
-    if( 0 == address )
+    if( i2cAddress > 0 )
     {
         checkUpdatedIoValues( header, ioOutput );
     }
@@ -288,12 +288,76 @@ byte checkForHeaderCommands(
         const String & header,
         String & output )
 {
+    output.concat("checking for header commands in " + header + " now...\n");
+
     if( header.indexOf("Get /scanI2C") >= 0)
     {
+        output.concat("Calling scan_I2C_for_mcp23017() now...\n");
         return scan_I2C_for_mcp23017(output);
     }
-    else if( header.indexOf("Get /sketch") >= 0)
+    else if( header.indexOf("Get /initMCP") >= 0)
     {
+        output.concat("Attempting to initialize mcp23017 at " + String(i2cAddress) + " now...\n");
+        Wire.beginTransmission(i2cAddress);
+        Wire.write(0x00); // IODIRA register
+        Wire.write(0x00); // set entire PORT A as output
+        delay(100);       // do we need a debounce here?
+        Wire.write(0x12); // address PORT A
+
+        Wire.write(1);    // PORT A 0
+        delay(1000);        // sleep a second
+        Wire.write(0);      // turn it off
+        delay(100);       // do we need a debounce here?
+
+        Wire.write(2);    // PORT A 1
+        delay(1000);        // sleep a second
+        Wire.write(0);      // turn it off
+        delay(100);       // do we need a debounce here?
+
+        Wire.write(4);    // PORT A 2
+        delay(1000);        // sleep a second
+        Wire.write(0);      // turn it off
+        delay(100);       // do we need a debounce here?
+
+        Wire.write(8);    // PORT A 3
+        delay(1000);        // sleep a second
+        Wire.write(0);      // turn it off
+        delay(100);       // do we need a debounce here?
+
+        Wire.write(16);    // PORT A 4
+        delay(1000);        // sleep a second
+        Wire.write(0);      // turn it off
+        delay(100);       // do we need a debounce here?
+
+        Wire.write(32);    // PORT A 5
+        delay(1000);        // sleep a second
+        Wire.write(0);      // turn it off
+        delay(100);       // do we need a debounce here?
+
+        Wire.write(64);    // PORT A 6
+        delay(1000);        // sleep a second
+        Wire.write(0);      // turn it off
+        delay(100);       // do we need a debounce here?
+
+        Wire.write(128);    // PORT A 7
+        delay(1000);        // sleep a second
+        Wire.write(0);      // turn it off
+        delay(100);       // do we need a debounce here?
+
+        byte error = Wire.endTransmission();
+
+        if (error == 0)
+        {
+            output.concat("I2C communication successful");
+        }
+        else
+        {
+            output.concat("I2C communication ERROR");
+        }
+    }
+    else if( header.indexOf("Get /info") >= 0)
+    {
+        output.concat("Calling display_Running_Sketch() now...\n");
         display_Running_Sketch(output);
     }
 
@@ -308,7 +372,7 @@ int8_t checkForHeaderCommands(
     {
         return scan_I2C_for_mcp23017(output);
     }
-    else if( header.find("Get /sketch") != std::string::npos)
+    else if( header.find("Get /info") != std::string::npos)
     {
         display_Running_Sketch(output);
     }
@@ -325,32 +389,32 @@ byte checkUpdatedIoValues(
     // turns the GPIOs on and off
     if (header.indexOf("GET /1/on") >= 0)
     {
-        Serial.println("GPIO 1 on");
+        //Serial.println("GPIO 1 on");
         //output5State = "on";
         outputStates[0] = 1;
 
-        digitalWrite(output5, HIGH);
+        //digitalWrite(output5, HIGH);
     }
     else if (header.indexOf("GET /1/off") >= 0)
     {
-        Serial.println("GPIO 1 off");
+        //Serial.println("GPIO 1 off");
         //output5State = "off";
         outputStates[0] = 0;
-        digitalWrite(output5, LOW);
+        //digitalWrite(output5, LOW);
     } 
     else if (header.indexOf("GET /2/on") >= 0) 
     {
-        Serial.println("GPIO 2 on");
+        //Serial.println("GPIO 2 on");
         //output4State = "on";
         outputStates[1] = 1;
-        digitalWrite(output4, HIGH);
+        //digitalWrite(output4, HIGH);
     }
     else if (header.indexOf("GET /2/off") >= 0) 
     {
-        Serial.println("GPIO 2 off");
+        //Serial.println("GPIO 2 off");
         //output4State = "off";
         outputStates[1] = 0;
-        digitalWrite(output4, LOW);
+        //digitalWrite(output4, LOW);
     }
 
     return 0;
@@ -418,6 +482,12 @@ void writeHtmlPageData(
     client.println("<tr>\n<td>Scan I2C Bus</td>\n");
     client.println("<td><a href=\"/scanI2C\"><button class=\"button2\">SCAN</button></a></td>\n</tr>\n");
 
+    if( i2cAddress > 0 )
+    {
+        client.println("<tr>\n<td>Initialize MCP23107 at " + String(i2cAddress) + "</td>\n");
+        client.println("<td><a href=\"/initMCP\"><button class=\"button2\">INIT</button></a></td>\n</tr>\n");
+    }
+
     client.println("<tr>\n<td>Dump Application Info</td>\n");
     client.println("<td><a href=\"/info\"><button class=\"button2\">INFO</button></a></td>\n");
     client.println("</tr>\n</table>\n\n");
@@ -446,7 +516,11 @@ void writeHtmlPageData(
         } 
     }
 
-    client.println("</table>\n</body>\n</html>");
+    client.println("</table>\n");
+    client.println("<p>Dumping Command Output:\n" + commandOutput + "\n");
+    client.println("<p>Dumping IO Output:\n" + ioOutput + "\n");
+    
+    client.println("</body>\n</html>");
     // End HTTP response with blank line
     client.println();
 }
@@ -646,7 +720,6 @@ byte scan_I2C_for_mcp23017(
     byte error = 0;
     byte address = 0;
     int nDevices = 0;
-    output = "";
 
     if( printSerial ) Serial.println("Scanning...");
     output.concat("Scanning for I2C devices...\n");
@@ -698,7 +771,7 @@ byte scan_I2C_for_mcp23017(
     else
     {
         if( printSerial ) Serial.println("done\n");
-        output.concat("done\n");
+        output.concat("done - rval set to " + String(address) + "\n");
     }
 
     return address;        
@@ -787,13 +860,14 @@ void display_Running_Sketch( String & output )
     int dot_loc = the_cpp_name.lastIndexOf('.');
     String the_sketchname = the_cpp_name.substring(0, dot_loc);
 
-    Serial.print("\nArduino is running Sketch: ");
-    Serial.println(the_sketchname);
-    Serial.print("Compiled on: ");
-    Serial.print(__DATE__);
-    Serial.print(" at ");
-    Serial.print(__TIME__);
-    Serial.print("\n");
+    output.concat("\nArduino is running Sketch: ");
+    output.concat(the_sketchname);
+    output.concat("\n");
+    output.concat("Compiled on: ");
+    output.concat(__DATE__);
+    output.concat(" at ");
+    output.concat(__TIME__);
+    output.concat("\n");
 }
 #else
 void display_Running_Sketch( std::string & output )
